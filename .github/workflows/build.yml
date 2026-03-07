@@ -104,6 +104,11 @@ jobs:
             mingw-w64-x86_64-meson
             make
 
+      - name: Add MSYS2 MINGW64 to PATH (Windows)
+        if: runner.os == 'Windows'
+        run: echo "C:\msys64\mingw64\bin" >> $env:GITHUB_PATH
+        shell: pwsh
+
       # ── Android NDK setup ─────────────────────────────────────────────────
       - name: Set up Android NDK
         if: matrix.name == 'android-arm64'
