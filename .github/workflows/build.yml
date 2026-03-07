@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [main]
+    branches: [main, test-ci]
     tags: ["v*"]
   pull_request:
     branches: [main]
@@ -35,32 +35,32 @@ jobs:
             apt_packages: gcc-aarch64-linux-gnu
 
           # ── Windows x86_64 ────────────────────────────────────────────────
-          - name: windows-x86_64
-            os: windows-2022
-            rust_target: x86_64-pc-windows-gnu
-            artifact: moyu_video.dll
-            cross: false
+          # - name: windows-x86_64
+          #   os: windows-2022
+          #   rust_target: x86_64-pc-windows-gnu
+          #   artifact: moyu_video.dll
+          #   cross: false
 
           # ── macOS arm64 ───────────────────────────────────────────
-          - name: macos-arm64
-            os: macos-14
-            rust_target: aarch64-apple-darwin
-            artifact: libmoyu_video.dylib
-            cross: false
+          # - name: macos-arm64
+          #   os: macos-14
+          #   rust_target: aarch64-apple-darwin
+          #   artifact: libmoyu_video.dylib
+          #   cross: false
 
           # ── Android arm64 (cross-compiled) ────────────────────────────────
-          - name: android-arm64
-            os: ubuntu-24.04
-            rust_target: aarch64-linux-android
-            artifact: libmoyu_video.so
-            cross: true
+          # - name: android-arm64
+          #   os: ubuntu-24.04
+          #   rust_target: aarch64-linux-android
+          #   artifact: libmoyu_video.so
+          #   cross: true
 
           # ── iOS arm64 ─────────────────────────────────────────────
-          - name: ios-arm64
-            os: macos-14
-            rust_target: aarch64-apple-ios
-            artifact: libmoyu_video.dylib
-            cross: true
+          # - name: ios-arm64
+          #   os: macos-14
+          #   rust_target: aarch64-apple-ios
+          #   artifact: libmoyu_video.dylib
+          #   cross: true
 
     steps:
       - name: Checkout repository (with submodules)
@@ -121,16 +121,16 @@ jobs:
           echo "AR=${NDK_BIN}/llvm-ar"                                   >> "$GITHUB_ENV"
 
       # ── Build FFmpeg ──────────────────────────────────────────────────────
-      - name: Build FFmpeg
-        shell: bash
-        run: |
-          bash scripts/build_ffmpeg.sh \
-            --target "${{ matrix.rust_target }}" \
-            --install-dir "$PWD/ffmpeg_install_${{ matrix.name }}"
+      # - name: Build FFmpeg
+      #   shell: bash
+      #   run: |
+      #     bash scripts/build_ffmpeg.sh \
+      #       --target "${{ matrix.rust_target }}" \
+      #       --install-dir "$PWD/ffmpeg_install_${{ matrix.name }}"
 
-      - name: Set FFMPEG_INSTALL_DIR environment variable
-        shell: bash
-        run: echo "FFMPEG_INSTALL_DIR=$PWD/ffmpeg_install_${{ matrix.name }}" >> "$GITHUB_ENV"
+      # - name: Set FFMPEG_INSTALL_DIR environment variable
+      #   shell: bash
+      #   run: echo "FFMPEG_INSTALL_DIR=$PWD/ffmpeg_install_${{ matrix.name }}" >> "$GITHUB_ENV"
 
       # ── Build the library ─────────────────────────────────────────────────
       - name: Build moyu_video
