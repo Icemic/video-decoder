@@ -41,13 +41,6 @@ jobs:
             artifact: moyu_video.dll
             cross: false
 
-          # ── macOS x86_64 ──────────────────────────────────────────────────
-          - name: macos-x86_64
-            os: macos-13
-            rust_target: x86_64-apple-darwin
-            artifact: libmoyu_video.dylib
-            cross: false
-
           # ── macOS arm64 ───────────────────────────────────────────
           - name: macos-arm64
             os: macos-14
@@ -81,11 +74,11 @@ jobs:
         if: runner.os == 'Linux' && matrix.apt_packages != ''
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends ${{ matrix.apt_packages }} nasm meson ninja-build
+          sudo apt-get install -y --no-install-recommends ${{ matrix.apt_packages }} nasm meson
 
       - name: Install nasm and meson (Linux)
         if: runner.os == 'Linux' && matrix.apt_packages == ''
-        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends nasm meson ninja-build
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends nasm meson
 
       # ── macOS dependencies ────────────────────────────────────────────────────
       - name: Install nasm and meson (macOS)
@@ -99,7 +92,7 @@ jobs:
         with:
           update: true
           install: >
-            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-llvm
             mingw-w64-x86_64-nasm
             mingw-w64-x86_64-meson
             make
@@ -117,29 +110,8 @@ jobs:
           echo "CC=${NDK_BIN}/aarch64-linux-android21-clang"             >> "$GITHUB_ENV"
           echo "AR=${NDK_BIN}/llvm-ar"                                   >> "$GITHUB_ENV"
 
-      # ── Rust toolchain ────────────────────────────────────────────────────
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.rust_target }}
-
-      - name: Cache Rust build artifacts
-        uses: Swatinem/rust-cache@v2
-        with:
-          key: ${{ matrix.name }}
-
       # ── Build FFmpeg ──────────────────────────────────────────────────────
-      - name: Cache FFmpeg installation
-        id: cache-ffmpeg
-        uses: actions/cache@v4
-        with:
-          path: |
-            ffmpeg_install_${{ matrix.name }}
-            dav1d_install_${{ matrix.name }}
-          key: ffmpeg-dav1d-${{ matrix.name }}-${{ hashFiles('ffmpeg/configure', 'dav1d/meson.build', 'scripts/build_ffmpeg.sh') }}
-
       - name: Build FFmpeg
-        if: steps.cache-ffmpeg.outputs.cache-hit != 'true'
         shell: bash
         run: |
           bash scripts/build_ffmpeg.sh \
@@ -170,7 +142,6 @@ jobs:
         with:
           name: ${{ matrix.name }}
           path: dist/
-          retention-days: 30
 
   # ── Publish release assets on tagged commits ───────────────────────────────
   release:
