@@ -8,13 +8,27 @@ fn main() {
     let ffmpeg_src = repo_root.join("ffmpeg");
     let dav1d_src = repo_root.join("dav1d");
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let ffmpeg_install = out_dir.join("ffmpeg_install");
+    let preinstalled_ffmpeg = env::var("FFMPEG_INSTALL_DIR");
+    let ffmpeg_install = if preinstalled_ffmpeg.is_ok() {
+        PathBuf::from(preinstalled_ffmpeg.unwrap())
+    } else {
+        out_dir.join("ffmpeg_install")
+    };
     let dav1d_install = out_dir.join("dav1d_install");
 
     // Only rebuild if key build inputs change.
-    println!("cargo:rerun-if-changed={}", ffmpeg_src.join("configure").display());
-    println!("cargo:rerun-if-changed={}", dav1d_src.join("meson.build").display());
-    println!("cargo:rerun-if-changed={}", repo_root.join("scripts/build_ffmpeg.sh").display());
+    println!(
+        "cargo:rerun-if-changed={}",
+        ffmpeg_src.join("configure").display()
+    );
+    println!(
+        "cargo:rerun-if-changed={}",
+        dav1d_src.join("meson.build").display()
+    );
+    println!(
+        "cargo:rerun-if-changed={}",
+        repo_root.join("scripts/build_ffmpeg.sh").display()
+    );
     println!("cargo:rerun-if-changed=build.rs");
 
     // Build dav1d + FFmpeg via the shared shell script (unless already cached).
@@ -45,7 +59,10 @@ fn main() {
     // dav1d is pulled in by avcodec.
     let lib_dir = ffmpeg_install.join("lib");
     println!("cargo:rustc-link-search=native={}", lib_dir.display());
-    println!("cargo:rustc-link-search=native={}", dav1d_install.join("lib").display());
+    println!(
+        "cargo:rustc-link-search=native={}",
+        dav1d_install.join("lib").display()
+    );
     println!("cargo:rustc-link-lib=static=avcodec");
     println!("cargo:rustc-link-lib=static=swscale");
     println!("cargo:rustc-link-lib=static=avutil");
