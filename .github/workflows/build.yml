@@ -111,11 +111,11 @@ jobs:
         run: |
           bash scripts/build_ffmpeg.sh \
             --target "${{ matrix.rust_target }}" \
-            --install-dir "$PWD/ffmpeg_install_${{ matrix.name }}"
+            --install-dir "$PWD/ffmpeg_install"
 
       - name: Set FFMPEG_INSTALL_DIR environment variable
         shell: bash
-        run: echo "FFMPEG_INSTALL_DIR=$PWD/ffmpeg_install_${{ matrix.name }}" >> "$GITHUB_ENV"
+        run: echo "FFMPEG_INSTALL_DIR=$PWD/ffmpeg_install" >> "$GITHUB_ENV"
 
       # ── Build the library ─────────────────────────────────────────────────
       - name: Build moyu_video
