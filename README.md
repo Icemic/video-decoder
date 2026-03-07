@@ -19,9 +19,9 @@ A native dynamic library that wraps [FFmpeg](https://ffmpeg.org/) and exposes a 
 | Linux          | aarch64      | `libmoyu_video.so` |
 | Windows        | x86\_64      | `moyu_video.dll`   |
 | macOS          | x86\_64      | `libmoyu_video.dylib` |
-| macOS          | arm64        | `libmoyu_video.dylib` |
-| Android        | arm64        | `libmoyu_video.so` |
-| iOS            | arm64        | `libmoyu_video.dylib` |
+| macOS          | aarch64        | `libmoyu_video.dylib` |
+| Android        | aarch64        | `libmoyu_video.so` |
+| iOS            | aarch64        | `libmoyu_video.dylib` |
 
 ## Supported Codecs
 
