@@ -137,7 +137,7 @@ jobs:
         run: |
           mkdir -p dist
           SRC="target/${{ matrix.rust_target }}/release/${{ matrix.artifact }}"
-          cp "$SRC" "dist/${{ matrix.name }}-${{ matrix.artifact }}"
+          cp "$SRC" "dist/${{ matrix.artifact }}"
           cp wrapper/include/moyu_video.h dist/
 
       - name: Upload build artifact
