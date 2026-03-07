@@ -72,12 +72,12 @@ fn main() {
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
     match target_os.as_str() {
         "linux" | "android" => {
-            println!("cargo:rustc-link-lib=pthread");
-            println!("cargo:rustc-link-lib=m");
+            // println!("cargo:rustc-link-lib=pthread");
+            // println!("cargo:rustc-link-lib=m");
         }
         "macos" | "ios" => {
-            println!("cargo:rustc-link-lib=pthread");
-            println!("cargo:rustc-link-lib=m");
+            // println!("cargo:rustc-link-lib=pthread");
+            // println!("cargo:rustc-link-lib=m");
         }
         "windows" => {
             println!("cargo:rustc-link-lib=bcrypt");
