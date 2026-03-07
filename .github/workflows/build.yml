@@ -128,7 +128,7 @@ jobs:
         shell: bash
         if: matrix.name == 'android-arm64'
         run: |
-          cargo binstall cargo-ndk
+          cargo install cargo-ndk
           cargo ndk -t arm64-v8a -o ./temp build --release -p wrapper
           mv ./temp/arm64-v8a/* target/aarch64-linux-android/release/
 
