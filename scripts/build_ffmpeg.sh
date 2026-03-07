@@ -43,7 +43,7 @@ DAV1D_SRC="${DAV1D_SRC_OVERRIDE:-$REPO_ROOT/dav1d}"
 
 BUILD_DIR="$INSTALL_DIR/../ffmpeg_build_$TARGET"
 DAV1D_BUILD_DIR="$INSTALL_DIR/../dav1d_build_$TARGET"
-DAV1D_INSTALL_DIR="${DAV1D_INSTALL_OVERRIDE:-$INSTALL_DIR/../dav1d_install_$TARGET}"
+DAV1D_INSTALL_DIR="${DAV1D_INSTALL_OVERRIDE:-$INSTALL_DIR/dav1d}"
 mkdir -p "$BUILD_DIR" "$INSTALL_DIR" "$DAV1D_BUILD_DIR" "$DAV1D_INSTALL_DIR"
 
 # ── Target mapping ────────────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ case "$TARGET" in
     aarch64-unknown-linux-gnu)
         FF_ARCH=aarch64; FF_OS=linux;  CROSS_PREFIX="aarch64-linux-gnu-"; EXTRA_CFLAGS="-fPIC" ;;
     x86_64-pc-windows-gnu)
-        FF_ARCH=x86_64; FF_OS=mingw32; CROSS_PREFIX="x86_64-w64-mingw32-"; EXTRA_CFLAGS="" ;;
+        FF_ARCH=x86_64; FF_OS=mingw32; CROSS_PREFIX=""; EXTRA_CFLAGS="" ;;
     x86_64-apple-darwin)
         FF_ARCH=x86_64; FF_OS=darwin;  CROSS_PREFIX=""; EXTRA_CFLAGS="" ;;
     aarch64-apple-darwin)
@@ -95,7 +95,7 @@ if [[ "$TARGET" != *"$(uname -m)"* ]] || [[ -n "$CROSS_PREFIX" ]]; then
     fi
 fi
 
-CC="${CC:-${CROSS_PREFIX}clang}"
+CC="${CC:-${CROSS_PREFIX}gcc}"
 
 meson setup "$DAV1D_BUILD_DIR" "$DAV1D_SRC" "${DAV1D_MESON_ARGS[@]}"
 ninja -C "$DAV1D_BUILD_DIR"
