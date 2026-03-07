@@ -35,11 +35,11 @@ jobs:
             apt_packages: clang binutils-aarch64-linux-gnu
 
           # ── Windows x86_64 ────────────────────────────────────────────────
-          # - name: windows-x86_64
-          #   os: windows-2022
-          #   rust_target: x86_64-pc-windows-gnu
-          #   artifact: moyu_video.dll
-          #   cross: false
+          - name: windows-x86_64
+            os: windows-2022
+            rust_target: x86_64-pc-windows-gnu
+            artifact: moyu_video.dll
+            cross: false
 
           # ── macOS arm64 ───────────────────────────────────────────
           # - name: macos-arm64
