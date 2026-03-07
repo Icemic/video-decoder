@@ -63,7 +63,8 @@ case "$TARGET" in
         DAV1D_CROSS_FILE="$DAV1D_SRC/package/crossfiles/aarch64-linux-clang.meson" ;;
     x86_64-pc-windows-gnu)
         FF_ARCH=x86_64; FF_OS=mingw32; CROSS_PREFIX="x86_64-w64-mingw32-"; EXTRA_CFLAGS=""
-        CLANG_TRIPLE=""; CLANG_GCC_TOOLCHAIN=""; DAV1D_CROSS_FILE="" ;;
+        CLANG_TRIPLE="x86_64-w64-mingw32"; CLANG_GCC_TOOLCHAIN="/usr"
+        DAV1D_CROSS_FILE="$DAV1D_SRC/package/crossfiles/x86_64-w64-mingw32.meson"  ;;
     x86_64-apple-darwin)
         FF_ARCH=x86_64; FF_OS=darwin; CROSS_PREFIX=""; EXTRA_CFLAGS=""
         CLANG_TRIPLE=""; CLANG_GCC_TOOLCHAIN=""; DAV1D_CROSS_FILE="" ;;
@@ -84,13 +85,7 @@ esac
 HOST_TARGET="$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]')"
 JOBS="${MAKE_JOBS:-$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)}"
 
-if [[ -n "${CLANG_TRIPLE:-}" ]]; then
-    _CLANG_FLAGS="--target=$CLANG_TRIPLE"
-    [[ -n "${CLANG_GCC_TOOLCHAIN:-}" ]] && _CLANG_FLAGS="$_CLANG_FLAGS --gcc-toolchain=$CLANG_GCC_TOOLCHAIN"
-    CC="${CC:-clang $_CLANG_FLAGS}"
-else
-    CC="${CC:-clang}"
-fi
+CC="${CC:-clang}"
 
 # ── Build dav1d ───────────────────────────────────────────────────────────────
 
@@ -113,7 +108,7 @@ if [[ -n "${DAV1D_CROSS_FILE:-}" ]]; then
 fi
 # Tell meson/clang where the GCC cross-toolchain is so library probes succeed.
 # NOTE: Passing -Dc_args overrides the cross file c_args, so we must also specify --target.
-if [[ -n "${CLANG_GCC_TOOLCHAIN:-}" ]]; then
+if [[ -n "${CLANG_GCC_TOOLCHAIN:-}" && "$TARGET" != *"windows"* ]]; then
     DAV1D_MESON_ARGS+=("-Dc_args=--target=$CLANG_TRIPLE --gcc-toolchain=$CLANG_GCC_TOOLCHAIN" "-Dc_link_args=--target=$CLANG_TRIPLE --gcc-toolchain=$CLANG_GCC_TOOLCHAIN")
 fi
 
@@ -169,6 +164,14 @@ if [[ -n "$CROSS_PREFIX" ]]; then
     # Tell FFmpeg to use the host pkg-config instead of falling back to 'false'
     # when it doesn't find prefixed-pkg-config (e.g., aarch64-linux-gnu-pkg-config).
     CONFIGURE_ARGS+=("--pkg-config=pkg-config")
+fi
+
+if [[ -n "${CLANG_TRIPLE:-}" ]]; then
+    _CLANG_FLAGS="--target=$CLANG_TRIPLE"
+    [[ -n "${CLANG_GCC_TOOLCHAIN:-}" ]] && _CLANG_FLAGS="$_CLANG_FLAGS --gcc-toolchain=$CLANG_GCC_TOOLCHAIN"
+    CC="clang $_CLANG_FLAGS"
+else
+    CC="clang"
 fi
 
 CONFIGURE_ARGS+=("--cc=$CC")

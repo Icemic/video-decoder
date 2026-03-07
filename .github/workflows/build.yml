@@ -34,12 +34,13 @@ jobs:
             cross: true
             apt_packages: clang binutils-aarch64-linux-gnu
 
-          # ── Windows x86_64 ────────────────────────────────────────────────
+          # ── Windows x86_64 (cross-compiled on Ubuntu) ─────────────────────
           - name: windows-x86_64
-            os: windows-2022
+            os: ubuntu-24.04
             rust_target: x86_64-pc-windows-gnu
             artifact: moyu_video.dll
-            cross: false
+            cross: true
+            apt_packages: gcc-mingw-w64-x86-64
 
           # ── macOS arm64 ───────────────────────────────────────────
           # - name: macos-arm64
@@ -80,22 +81,14 @@ jobs:
         if: runner.os == 'Linux' && matrix.apt_packages == ''
         run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends nasm meson
 
+      - name: Install Rust cross-compilation target
+        if: matrix.cross
+        run: rustup target add ${{ matrix.rust_target }}
+
       # ── macOS dependencies ────────────────────────────────────────────────────
       - name: Install nasm and meson (macOS)
         if: runner.os == 'macOS'
         run: brew install nasm meson
-
-      # ── Windows dependencies ──────────────────────────────────────────────
-      - name: Install MSYS2 / MinGW toolchain (Windows)
-        if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          install: >
-            mingw-w64-x86_64-llvm
-            mingw-w64-x86_64-nasm
-            mingw-w64-x86_64-meson
-            make
 
       # ── Android NDK setup ─────────────────────────────────────────────────
       - name: Download and install Android NDK

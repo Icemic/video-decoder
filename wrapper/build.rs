@@ -64,8 +64,6 @@ fn main() {
         }
         "windows" => {
             println!("cargo:rustc-link-lib=bcrypt");
-            println!("cargo:rustc-link-lib=secur32");
-            println!("cargo:rustc-link-lib=ws2_32");
         }
         _ => {}
     }
