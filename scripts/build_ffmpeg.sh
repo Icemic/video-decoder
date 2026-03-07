@@ -72,8 +72,8 @@ case "$TARGET" in
         FF_ARCH=aarch64; FF_OS=darwin; CROSS_PREFIX=""; EXTRA_CFLAGS=""
         CLANG_TRIPLE=""; CLANG_GCC_TOOLCHAIN=""; DAV1D_CROSS_FILE="" ;;
     aarch64-linux-android)
-        FF_ARCH=aarch64; FF_OS=android; CROSS_PREFIX="${ANDROID_CROSS_PREFIX:-aarch64-linux-android-}"; EXTRA_CFLAGS="-fPIC"
-        CLANG_TRIPLE=""; CLANG_GCC_TOOLCHAIN=""; DAV1D_CROSS_FILE="" ;;
+        FF_ARCH=aarch64; FF_OS=android; CROSS_PREFIX="${ANDROID_CROSS_PREFIX:-llvm-}"; EXTRA_CFLAGS="-fPIC"
+        CLANG_TRIPLE=""; CLANG_GCC_TOOLCHAIN=""; DAV1D_CROSS_FILE="$DAV1D_SRC/package/crossfiles/aarch64-android.meson" ;;
     aarch64-apple-ios)
         FF_ARCH=aarch64; FF_OS=darwin; CROSS_PREFIX=""; EXTRA_CFLAGS="-arch arm64 -mios-version-min=13.0 -isysroot $(xcrun --sdk iphoneos --show-sdk-path 2>/dev/null || echo '')"
         CLANG_TRIPLE=""; CLANG_GCC_TOOLCHAIN=""; DAV1D_CROSS_FILE="" ;;
@@ -84,6 +84,10 @@ esac
 
 HOST_TARGET="$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]')"
 JOBS="${MAKE_JOBS:-$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)}"
+
+if [[ "$FF_OS" == "android" ]]; then
+    PATH="${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
+fi
 
 CC="${CC:-clang}"
 
@@ -166,7 +170,11 @@ if [[ -n "$CROSS_PREFIX" ]]; then
     CONFIGURE_ARGS+=("--pkg-config=pkg-config")
 fi
 
-if [[ -n "${CLANG_TRIPLE:-}" ]]; then
+if [[ "$FF_OS" == "android" ]]; then
+    # add ANDROID_NDK_HOME to the search path for the Android sysroot headers/libraries
+    CONFIGURE_ARGS+=("--sysroot=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot")
+    CC="aarch64-linux-android26-clang"
+elif [[ -n "${CLANG_TRIPLE:-}" ]]; then
     _CLANG_FLAGS="--target=$CLANG_TRIPLE"
     [[ -n "${CLANG_GCC_TOOLCHAIN:-}" ]] && _CLANG_FLAGS="$_CLANG_FLAGS --gcc-toolchain=$CLANG_GCC_TOOLCHAIN"
     CC="clang $_CLANG_FLAGS"
