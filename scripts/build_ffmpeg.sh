@@ -43,7 +43,7 @@ DAV1D_SRC="${DAV1D_SRC_OVERRIDE:-$REPO_ROOT/dav1d}"
 
 BUILD_DIR="$INSTALL_DIR/../ffmpeg_build_$TARGET"
 DAV1D_BUILD_DIR="$INSTALL_DIR/../dav1d_build_$TARGET"
-DAV1D_INSTALL_DIR="${DAV1D_INSTALL_OVERRIDE:-$INSTALL_DIR/dav1d}"
+DAV1D_INSTALL_DIR="${DAV1D_INSTALL_OVERRIDE:-$INSTALL_DIR/../dav1d_install_$TARGET}"
 mkdir -p "$BUILD_DIR" "$INSTALL_DIR" "$DAV1D_BUILD_DIR" "$DAV1D_INSTALL_DIR"
 
 # ── Target mapping ────────────────────────────────────────────────────────────
@@ -56,6 +56,7 @@ case "$TARGET" in
     aarch64-unknown-linux-gnu)
         FF_ARCH=aarch64; FF_OS=linux;  CROSS_PREFIX="aarch64-linux-gnu-"; EXTRA_CFLAGS="-fPIC" ;;
     x86_64-pc-windows-gnu)
+        # Native Windows build using MSYS2 MINGW64 toolchain — no cross prefix needed.
         FF_ARCH=x86_64; FF_OS=mingw32; CROSS_PREFIX=""; EXTRA_CFLAGS="" ;;
     x86_64-apple-darwin)
         FF_ARCH=x86_64; FF_OS=darwin;  CROSS_PREFIX=""; EXTRA_CFLAGS="" ;;
@@ -64,7 +65,9 @@ case "$TARGET" in
     aarch64-linux-android)
         FF_ARCH=aarch64; FF_OS=android; CROSS_PREFIX="${ANDROID_CROSS_PREFIX:-aarch64-linux-android-}"; EXTRA_CFLAGS="-fPIC" ;;
     aarch64-apple-ios)
-        FF_ARCH=aarch64; FF_OS=darwin; CROSS_PREFIX=""; EXTRA_CFLAGS="-arch arm64 -mios-version-min=13.0 -isysroot $(xcrun --sdk iphoneos --show-sdk-path 2>/dev/null || echo '')" ;;
+        IOS_SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+        FF_ARCH=aarch64; FF_OS=darwin; CROSS_PREFIX=""
+        EXTRA_CFLAGS="-arch arm64 -mios-version-min=13.0 -isysroot ${IOS_SDK}" ;;
     *)
         echo "Unsupported target triple: $TARGET" >&2
         exit 1 ;;
@@ -92,10 +95,36 @@ if [[ "$TARGET" != *"$(uname -m)"* ]] || [[ -n "$CROSS_PREFIX" ]]; then
     MESON_CROSS_FILE="$REPO_ROOT/package/crossfiles/${TARGET}.meson"
     if [[ -f "$MESON_CROSS_FILE" ]]; then
         DAV1D_MESON_ARGS+=("--cross-file=$MESON_CROSS_FILE")
+    elif [[ "$TARGET" == "aarch64-linux-android" ]]; then
+        # Generate a meson cross-file for Android on the fly using NDK toolchain.
+        ANDROID_CC="${CC:-aarch64-linux-android21-clang}"
+        ANDROID_AR="${AR:-llvm-ar}"
+        ANDROID_CROSS_FILE="$DAV1D_BUILD_DIR/android-cross.ini"
+        cat > "$ANDROID_CROSS_FILE" <<EOF
+[binaries]
+c       = '${ANDROID_CC}'
+ar      = '${ANDROID_AR}'
+strip   = 'llvm-strip'
+pkgconfig = 'pkg-config'
+
+[host_machine]
+system     = 'android'
+cpu_family = 'aarch64'
+cpu        = 'aarch64'
+endian     = 'little'
+EOF
+        DAV1D_MESON_ARGS+=("--cross-file=$ANDROID_CROSS_FILE")
     fi
 fi
 
-CC="${CC:-${CROSS_PREFIX}gcc}"
+# Set the C compiler: prefer env CC, then ${CROSS_PREFIX}gcc, else plain gcc.
+# Using gcc (not clang) ensures cross-compile toolchains (e.g. aarch64-linux-gnu-gcc)
+# are available on the runner.  For iOS the xcrun clang is used instead.
+if [[ "$TARGET" == "aarch64-apple-ios" ]]; then
+    CC="${CC:-$(xcrun --sdk iphoneos --find clang)}"
+else
+    CC="${CC:-${CROSS_PREFIX}gcc}"
+fi
 
 meson setup "$DAV1D_BUILD_DIR" "$DAV1D_SRC" "${DAV1D_MESON_ARGS[@]}"
 ninja -C "$DAV1D_BUILD_DIR"
@@ -154,6 +183,9 @@ echo "==> Configuring FFmpeg for target: $TARGET"
 echo "    Install dir : $INSTALL_DIR"
 echo "    Build dir   : $BUILD_DIR"
 echo "    Configure   : ${CONFIGURE_ARGS[*]}"
+
+# Make pkg-config able to find the dav1d .pc file we just installed.
+export PKG_CONFIG_PATH="${DAV1D_INSTALL_DIR}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 
 cd "$BUILD_DIR"
 "${CONFIGURE_ARGS[@]}"

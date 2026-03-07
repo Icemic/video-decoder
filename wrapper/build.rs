@@ -8,26 +8,14 @@ fn main() {
     let ffmpeg_src = repo_root.join("ffmpeg");
     let dav1d_src = repo_root.join("dav1d");
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-
-    // If FFMPEG_INSTALL_DIR is set (e.g. pre-built in CI), use it directly and
-    // skip the build.  Otherwise fall back to building inside $OUT_DIR.
-    let ffmpeg_install = env::var("FFMPEG_INSTALL_DIR")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| out_dir.join("ffmpeg_install"));
-
-    // If DAV1D_INSTALL_DIR is set (e.g. pre-built in CI), use it directly.
-    // Otherwise fall back to building inside $OUT_DIR.
-    let dav1d_install = env::var("DAV1D_INSTALL_DIR")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| out_dir.join("dav1d_install"));
+    let ffmpeg_install = out_dir.join("ffmpeg_install");
+    let dav1d_install = out_dir.join("dav1d_install");
 
     // Only rebuild if key build inputs change.
     println!("cargo:rerun-if-changed={}", ffmpeg_src.join("configure").display());
     println!("cargo:rerun-if-changed={}", dav1d_src.join("meson.build").display());
     println!("cargo:rerun-if-changed={}", repo_root.join("scripts/build_ffmpeg.sh").display());
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-env-changed=FFMPEG_INSTALL_DIR");
-    println!("cargo:rerun-if-env-changed=DAV1D_INSTALL_DIR");
 
     // Build dav1d + FFmpeg via the shared shell script (unless already cached).
     if !ffmpeg_install.join("lib").join("libavcodec.a").exists() {
