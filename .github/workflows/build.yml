@@ -74,12 +74,12 @@ jobs:
       - name: Install Linux cross-compilation toolchain
         if: runner.os == 'Linux' && matrix.apt_packages != ''
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends ${{ matrix.apt_packages }} nasm meson
+          sudo apt update -qq
+          sudo apt install -y ${{ matrix.apt_packages }} nasm meson
 
       - name: Install nasm and meson (Linux)
         if: runner.os == 'Linux' && matrix.apt_packages == ''
-        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends nasm meson
+        run: sudo apt update -qq && sudo apt install -y nasm meson
 
       - name: Install Rust cross-compilation target
         if: matrix.cross
