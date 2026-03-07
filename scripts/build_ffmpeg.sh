@@ -43,7 +43,7 @@ DAV1D_SRC="${DAV1D_SRC_OVERRIDE:-$REPO_ROOT/dav1d}"
 
 BUILD_DIR="$INSTALL_DIR/../ffmpeg_build_$TARGET"
 DAV1D_BUILD_DIR="$INSTALL_DIR/../dav1d_build_$TARGET"
-DAV1D_INSTALL_DIR="${DAV1D_INSTALL_OVERRIDE:-$INSTALL_DIR/../dav1d_install_$TARGET}"
+DAV1D_INSTALL_DIR="${DAV1D_INSTALL_OVERRIDE:-$INSTALL_DIR}"
 mkdir -p "$BUILD_DIR" "$INSTALL_DIR" "$DAV1D_BUILD_DIR" "$DAV1D_INSTALL_DIR"
 
 # ── Target mapping ────────────────────────────────────────────────────────────
