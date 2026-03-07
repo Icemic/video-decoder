@@ -1,0 +1,6 @@
+[submodule "ffmpeg"]
+	path = ffmpeg
+	url = git@github.com:FFmpeg/FFmpeg.git
+[submodule "dav1d"]
+	path = dav1d
+	url = git@github.com:videolan/dav1d.git

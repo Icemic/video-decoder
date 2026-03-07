@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "wrapper",
+    "sample",
+]
+resolver = "2"

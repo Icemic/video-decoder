@@ -1,0 +1,16 @@
+[package]
+name = "wrapper"
+version = "0.1.0"
+edition = "2021"
+license = "LGPL-2.1-or-later"
+description = "A minimal C API wrapper around FFmpeg for VP9/AV1 software decoding"
+build = "build.rs"
+
+[lib]
+name = "moyu_video"
+crate-type = ["cdylib"]
+
+[build-dependencies]
+bindgen = "0.71"
+
+[dev-dependencies]
