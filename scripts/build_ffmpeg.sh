@@ -93,6 +93,7 @@ echo "==> Building dav1d for target: $TARGET"
 
 DAV1D_MESON_ARGS=(
     "--prefix=$DAV1D_INSTALL_DIR"
+    "--libdir=lib"
     "--default-library=static"
     "--buildtype=release"
     "-Denable_tools=false"
@@ -159,13 +160,15 @@ fi
 
 CONFIGURE_ARGS+=("--cc=$CC")
 
+# Let pkg-config find the just-built dav1d.
+export PKG_CONFIG_PATH="${DAV1D_INSTALL_DIR}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+
 echo "==> Configuring FFmpeg for target: $TARGET"
 echo "    Install dir : $INSTALL_DIR"
 echo "    Build dir   : $BUILD_DIR"
 echo "    Configure   : ${CONFIGURE_ARGS[*]}"
-
-# Let pkg-config find the just-built dav1d.
-export PKG_CONFIG_PATH="${DAV1D_INSTALL_DIR}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+echo "    Using CC    : $CC"
+echo "    PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
 
 cd "$BUILD_DIR"
 "${CONFIGURE_ARGS[@]}"
