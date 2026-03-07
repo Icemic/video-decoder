@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [main, test-ci]
+    branches: [main]
     tags: ["v*"]
   pull_request:
     branches: [main]
@@ -161,6 +161,7 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           path: artifacts/
+          skip-decompress: true
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2.5.0
