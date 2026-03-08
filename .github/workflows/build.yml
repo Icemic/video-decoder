@@ -64,11 +64,11 @@ jobs:
             cross: true
 
           # ── iOS aarch64 ─────────────────────────────────────────────
-          # - name: ios-aarch64
-          #   os: macos-14
-          #   rust_target: aarch64-apple-ios
-          #   artifact: libmoyu_video.dylib
-          #   cross: true
+          - name: ios-aarch64
+            os: macos-26
+            rust_target: aarch64-apple-ios
+            artifact: libmoyu_video.dylib
+            cross: true
 
     steps:
       - name: Checkout repository (with submodules)
