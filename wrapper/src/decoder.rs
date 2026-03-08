@@ -1,4 +1,7 @@
 use std::ptr;
+
+use libc;
+
 use crate::ffi::*;
 
 /// Supported codec identifiers, mirroring the public C enum.
@@ -135,7 +138,7 @@ impl Decoder {
                 av_frame,
                 dst_frame,
                 sws_ctx: ptr::null_mut(),
-                sws_src_fmt: -1i32,
+                sws_src_fmt: AV_PIX_FMT_NONE,
                 output_format,
                 dst_buf: Vec::new(),
             })
@@ -358,7 +361,7 @@ fn AVERROR(e: i32) -> i32 {
 /// `FFERRTAG( 'E','O','F',' ')` which expands to a specific tag value.
 fn averror_eof() -> i32 {
     // FFERRTAG('E','O','F',' ') = -(0x45 | (0x4F << 8) | (0x46 << 16) | (0x20 << 24))
-    -(0x45 | (0x4F << 8) | (0x46 << 16) | (0x20 << 24)) as i32
+    -((0x45 | (0x4F << 8) | (0x46 << 16) | (0x20 << 24)) as i32)
 }
 
-const EAGAIN: u32 = 11; // POSIX EAGAIN
+const EAGAIN: u32 = libc::EAGAIN as u32;
