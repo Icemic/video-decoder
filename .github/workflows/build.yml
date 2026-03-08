@@ -43,11 +43,18 @@ jobs:
             apt_packages: gcc-mingw-w64-x86-64
 
           # ── macOS aarch64 ───────────────────────────────────────────
-          # - name: macos-aarch64
-          #   os: macos-14
-          #   rust_target: aarch64-apple-darwin
-          #   artifact: libmoyu_video.dylib
-          #   cross: false
+          - name: macos-aarch64
+            os: macos-14
+            rust_target: aarch64-apple-darwin
+            artifact: libmoyu_video.dylib
+            cross: false
+
+          # ── macOS x86_64  ───────────────────────────────────────────
+          - name: macos-x86_64
+            os: macos-14-large
+            rust_target: x86_64-apple-darwin
+            artifact: libmoyu_video.dylib
+            cross: false
 
           # ── Android aarch64 (cross-compiled) ────────────────────────────────
           - name: android-aarch64
@@ -88,7 +95,7 @@ jobs:
       # ── macOS dependencies ────────────────────────────────────────────────────
       - name: Install nasm and meson (macOS)
         if: runner.os == 'macOS'
-        run: brew install nasm meson
+        run: brew install nasm meson pkg-config
 
       # ── Android NDK setup ─────────────────────────────────────────────────
       - name: Download and install Android NDK
