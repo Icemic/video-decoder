@@ -50,6 +50,7 @@ mkdir -p "$BUILD_DIR" "$INSTALL_DIR" "$DAV1D_BUILD_DIR" "$DAV1D_INSTALL_DIR"
 
 # Derive FFmpeg arch/target-os and cross-compile toolchain prefix from the Rust
 # target triple.
+EXTRA_LDFLAGS=""
 case "$TARGET" in
     x86_64-unknown-linux-gnu)
         FF_ARCH=x86_64; FF_OS=linux; CROSS_PREFIX=""; EXTRA_CFLAGS="-fPIC"
@@ -76,7 +77,8 @@ case "$TARGET" in
         CLANG_TRIPLE=""; CLANG_GCC_TOOLCHAIN=""; DAV1D_CROSS_FILE="$DAV1D_SRC/package/crossfiles/aarch64-android.meson" ;;
     aarch64-apple-ios)
         FF_ARCH=aarch64; FF_OS=darwin; CROSS_PREFIX=""; EXTRA_CFLAGS="-arch arm64 -mios-version-min=13.0 -isysroot $(xcrun --sdk iphoneos --show-sdk-path 2>/dev/null || echo '')"
-        CLANG_TRIPLE=""; CLANG_GCC_TOOLCHAIN=""; DAV1D_CROSS_FILE="" ;;
+        EXTRA_LDFLAGS="$EXTRA_CFLAGS"
+        CLANG_TRIPLE=""; CLANG_GCC_TOOLCHAIN=""; DAV1D_CROSS_FILE="$DAV1D_SRC/package/crossfiles/arm64-iPhoneOS.meson" ;;
     *)
         echo "Unsupported target triple: $TARGET" >&2
         exit 1 ;;
@@ -148,7 +150,7 @@ CONFIGURE_ARGS=(
     "--arch=$FF_ARCH"
     "--target-os=$FF_OS"
     "--extra-cflags=-I${DAV1D_INSTALL_DIR}/include${EXTRA_CFLAGS:+ $EXTRA_CFLAGS}"
-    "--extra-ldflags=-L${DAV1D_INSTALL_DIR}/lib"
+    "--extra-ldflags=-L${DAV1D_INSTALL_DIR}/lib${EXTRA_LDFLAGS:+ $EXTRA_LDFLAGS}"
 )
 
 # Threading model.
