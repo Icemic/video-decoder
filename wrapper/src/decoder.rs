@@ -226,7 +226,14 @@ impl Decoder {
                     planes[i] = (*self.av_frame).data[i] as *const u8;
                     strides[i] = (*self.av_frame).linesize[i];
                 }
-                return Ok(Frame { planes, strides, width, height, format: output_format, pts });
+                return Ok(Frame {
+                    planes,
+                    strides,
+                    width,
+                    height,
+                    format: output_format,
+                    pts,
+                });
             }
 
             // Normalize any other format to I420 for the public ABI.
@@ -254,7 +261,14 @@ impl Decoder {
                 strides[i] = (*self.dst_frame).linesize[i];
             }
 
-            Ok(Frame { planes, strides, width, height, format: output_format, pts })
+            Ok(Frame {
+                planes,
+                strides,
+                width,
+                height,
+                format: output_format,
+                pts,
+            })
         }
     }
 
@@ -290,8 +304,12 @@ impl Decoder {
                 sws_freeContext(self.sws_ctx);
             }
             self.sws_ctx = sws_getContext(
-                width, height, src_fmt,
-                width, height, dst_fmt,
+                width,
+                height,
+                src_fmt,
+                width,
+                height,
+                dst_fmt,
                 SWS_BILINEAR as i32,
                 ptr::null_mut(),
                 ptr::null_mut(),

@@ -1,10 +1,10 @@
-# moyu\_video
+# video-decoder
 
 A native dynamic library that wraps [FFmpeg](https://ffmpeg.org/) and exposes a minimal, stable C ABI for software decoding of VP9 and AV1 video streams.
 
 ## Purpose
 
-`moyu_video` is designed for embedders (game engines, media players, streaming clients) that require deterministic, cross-platform, CPU-based video decoding without hardware-acceleration dependencies. The library:
+`video-decoder` is designed for embedders that require deterministic, cross-platform, CPU-based video decoding without hardware-acceleration dependencies. The library:
 
 - Accepts compressed video packets and produces raw pixel frames.
 - Enforces an I420 (YUV420P) or NV12 output format, with explicit stride information on every frame, suitable for direct upload to GPU texture APIs such as wgpu, Metal, or Vulkan.
@@ -13,15 +13,15 @@ A native dynamic library that wraps [FFmpeg](https://ffmpeg.org/) and exposes a 
 
 ## Supported Platforms
 
-| Platform       | Architecture | Artifact                   |
-|----------------|--------------|----------------------------|
-| Linux          | x86\_64      | `libmoyu_video.so` |
-| Linux          | aarch64      | `libmoyu_video.so` |
-| Windows        | x86\_64      | `moyu_video.dll`   |
-| macOS          | x86\_64      | `libmoyu_video.dylib` |
-| macOS          | aarch64        | `libmoyu_video.dylib` |
-| Android        | aarch64        | `libmoyu_video.so` |
-| iOS            | aarch64        | `libmoyu_video.dylib` |
+| Platform | Architecture | Artifact              |
+| -------- | ------------ | --------------------- |
+| Linux    | x86_64       | `libmoyu_video.so`    |
+| Linux    | aarch64      | `libmoyu_video.so`    |
+| Windows  | x86_64       | `moyu_video.dll`      |
+| macOS    | x86_64       | `libmoyu_video.dylib` |
+| macOS    | aarch64      | `libmoyu_video.dylib` |
+| Android  | aarch64      | `libmoyu_video.so`    |
+| iOS      | aarch64      | `libmoyu_video.dylib` |
 
 ## Supported Codecs
 

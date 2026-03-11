@@ -42,10 +42,10 @@ enum MoyuVideoPixelFormat {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(dead_code)]
 enum MoyuVideoResult {
-    Ok              =  0,
-    Error           = -1,
-    Again           = -2,
-    Eof             = -3,
+    Ok = 0,
+    Error = -1,
+    Again = -2,
+    Eof = -3,
     InvalidArgument = -4,
 }
 
@@ -57,12 +57,12 @@ struct MoyuVideoDecoderConfig {
 
 #[repr(C)]
 struct MoyuVideoFrame {
-    planes:  [*const u8; 3],
+    planes: [*const u8; 3],
     strides: [i32; 3],
-    width:   i32,
-    height:  i32,
-    format:  MoyuVideoPixelFormat,
-    pts:     i64,
+    width: i32,
+    height: i32,
+    format: MoyuVideoPixelFormat,
+    pts: i64,
 }
 
 // Opaque handle type.
@@ -75,31 +75,25 @@ type FnDecoderCreate = unsafe extern "C" fn(
     *mut *mut MoyuVideoDecoder,
 ) -> MoyuVideoResult;
 
-type FnDecoderSendPacket = unsafe extern "C" fn(
-    *mut MoyuVideoDecoder,
-    *const u8,
-    i32,
-    i64,
-) -> MoyuVideoResult;
+type FnDecoderSendPacket =
+    unsafe extern "C" fn(*mut MoyuVideoDecoder, *const u8, i32, i64) -> MoyuVideoResult;
 
-type FnDecoderReceiveFrame = unsafe extern "C" fn(
-    *mut MoyuVideoDecoder,
-    *mut MoyuVideoFrame,
-) -> MoyuVideoResult;
+type FnDecoderReceiveFrame =
+    unsafe extern "C" fn(*mut MoyuVideoDecoder, *mut MoyuVideoFrame) -> MoyuVideoResult;
 
-type FnDecoderFlush   = unsafe extern "C" fn(*mut MoyuVideoDecoder);
+type FnDecoderFlush = unsafe extern "C" fn(*mut MoyuVideoDecoder);
 type FnDecoderDestroy = unsafe extern "C" fn(*mut MoyuVideoDecoder);
-type FnGetFfmpegInfo  = unsafe extern "C" fn() -> *const std::ffi::c_char;
+type FnGetFfmpegInfo = unsafe extern "C" fn() -> *const std::ffi::c_char;
 
 // ── Loaded library wrapper ────────────────────────────────────────────────────
 
 struct WrapperLib {
-    _lib:          Library,
-    create:        FnDecoderCreate,
-    send_packet:   FnDecoderSendPacket,
+    _lib: Library,
+    create: FnDecoderCreate,
+    send_packet: FnDecoderSendPacket,
     receive_frame: FnDecoderReceiveFrame,
-    flush:         FnDecoderFlush,
-    destroy:       FnDecoderDestroy,
+    flush: FnDecoderFlush,
+    destroy: FnDecoderDestroy,
     get_ffmpeg_info: FnGetFfmpegInfo,
 }
 
@@ -129,13 +123,13 @@ impl WrapperLib {
                 .expect("Symbol moyu_video_get_ffmpeg_info not found");
 
             WrapperLib {
-                create:          *create,
-                send_packet:     *send_packet,
-                receive_frame:   *receive_frame,
-                flush:           *flush,
-                destroy:         *destroy,
+                create: *create,
+                send_packet: *send_packet,
+                receive_frame: *receive_frame,
+                flush: *flush,
+                destroy: *destroy,
                 get_ffmpeg_info: *get_ffmpeg_info,
-                _lib:            lib,
+                _lib: lib,
             }
         }
     }
@@ -182,10 +176,13 @@ fn read_ivf_frames(path: &std::path::Path) -> Vec<Vec<u8>> {
     let mut frames = Vec::new();
     let mut pos = 32;
     while pos + 12 <= data.len() {
-        let frame_size = u32::from_le_bytes([data[pos], data[pos+1], data[pos+2], data[pos+3]]) as usize;
+        let frame_size =
+            u32::from_le_bytes([data[pos], data[pos + 1], data[pos + 2], data[pos + 3]]) as usize;
         let frame_start = pos + 12;
         let frame_end = frame_start + frame_size;
-        if frame_end > data.len() { break; }
+        if frame_end > data.len() {
+            break;
+        }
         frames.push(data[frame_start..frame_end].to_vec());
         pos = frame_end;
     }
@@ -206,59 +203,64 @@ fn run_decode_test(lib: &WrapperLib, video_path: &std::path::Path, codec: MoyuVi
     };
     let mut handle: *mut MoyuVideoDecoder = std::ptr::null_mut();
     let result = unsafe { (lib.create)(&config, &mut handle) };
-    assert_eq!(result, MoyuVideoResult::Ok, "moyu_video_decoder_create failed");
+    assert_eq!(
+        result,
+        MoyuVideoResult::Ok,
+        "moyu_video_decoder_create failed"
+    );
     assert!(!handle.is_null());
 
     let mut frames_decoded = 0u32;
 
     'outer: for (idx, packet) in packets.iter().enumerate() {
-        let r = unsafe {
-            (lib.send_packet)(
-                handle,
-                packet.as_ptr(),
-                packet.len() as i32,
-                idx as i64,
-            )
-        };
+        let r =
+            unsafe { (lib.send_packet)(handle, packet.as_ptr(), packet.len() as i32, idx as i64) };
         assert_eq!(r, MoyuVideoResult::Ok, "send_packet failed at frame {idx}");
 
         loop {
             let mut frame = MoyuVideoFrame {
-                planes:  [std::ptr::null(); 3],
+                planes: [std::ptr::null(); 3],
                 strides: [0; 3],
-                width:   0,
-                height:  0,
-                format:  MoyuVideoPixelFormat::I420,
-                pts:     0,
+                width: 0,
+                height: 0,
+                format: MoyuVideoPixelFormat::I420,
+                pts: 0,
             };
 
             let r = unsafe { (lib.receive_frame)(handle, &mut frame) };
             match r {
                 MoyuVideoResult::Ok => {
                     frames_decoded += 1;
-                    assert!(frame.width > 0,  "Frame width must be positive");
+                    assert!(frame.width > 0, "Frame width must be positive");
                     assert!(frame.height > 0, "Frame height must be positive");
                     assert!(!frame.planes[0].is_null(), "Y plane must not be null");
                     assert!(frame.strides[0] >= frame.width, "Y stride must be >= width");
 
                     println!(
                         "  Frame {frames_decoded}: {}x{} pts={} format={:?} strides=[{},{},{}]",
-                        frame.width, frame.height, frame.pts,
+                        frame.width,
+                        frame.height,
+                        frame.pts,
                         frame.format,
-                        frame.strides[0], frame.strides[1], frame.strides[2],
+                        frame.strides[0],
+                        frame.strides[1],
+                        frame.strides[2],
                     );
 
                     // Verify Y plane contains actual data (while decoder is alive).
                     let y_len = (frame.strides[0] * frame.height) as usize;
                     let y_slice = unsafe { std::slice::from_raw_parts(frame.planes[0], y_len) };
-                    assert!(y_slice.iter().any(|&b| b != 0), "Y plane must contain non-zero pixel data");
+                    assert!(
+                        y_slice.iter().any(|&b| b != 0),
+                        "Y plane must contain non-zero pixel data"
+                    );
 
                     if frames_decoded >= 3 {
                         break 'outer;
                     }
                 }
                 MoyuVideoResult::Again => break,
-                MoyuVideoResult::Eof   => break 'outer,
+                MoyuVideoResult::Eof => break 'outer,
                 other => panic!("receive_frame returned unexpected result: {:?}", other),
             }
         }
@@ -287,7 +289,7 @@ fn main() {
 
     let fixtures = fixtures_dir();
     run_decode_test(&lib, &fixtures.join("test_vp9.ivf"), MoyuVideoCodec::Vp9);
-    run_decode_test(&lib, &fixtures.join("test_av1.ivf"),  MoyuVideoCodec::Av1);
+    run_decode_test(&lib, &fixtures.join("test_av1.ivf"), MoyuVideoCodec::Av1);
 
     println!("All integration tests passed.");
 }

@@ -354,7 +354,10 @@ mod tests {
                             "Frame dimensions must be positive"
                         );
                         assert!(!frame.planes[0].is_null(), "Y plane must not be null");
-                        assert!(matches!(frame.format, PixelFormat::I420 | PixelFormat::Nv12));
+                        assert!(matches!(
+                            frame.format,
+                            PixelFormat::I420 | PixelFormat::Nv12
+                        ));
 
                         // Verify Y plane has actual pixel data (not all zeros).
                         // SAFETY: plane pointer is valid while decoder is alive.
