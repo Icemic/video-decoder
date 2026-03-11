@@ -45,7 +45,6 @@ pub enum MoyuVideoResult {
 #[repr(C)]
 pub struct MoyuVideoDecoderConfig {
     pub codec: MoyuVideoCodec,
-    pub output_format: MoyuVideoPixelFormat,
     /// Number of decoding threads. 0 = automatic (based on CPU core count).
     pub thread_count: i32,
 }
@@ -99,12 +98,7 @@ pub unsafe extern "C" fn moyu_video_decoder_create(
         MoyuVideoCodec::Av1 => Codec::Av1,
     };
 
-    let fmt = match cfg.output_format {
-        MoyuVideoPixelFormat::I420 => PixelFormat::I420,
-        MoyuVideoPixelFormat::Nv12 => PixelFormat::Nv12,
-    };
-
-    match Decoder::new(codec, fmt, cfg.thread_count) {
+    match Decoder::new(codec, cfg.thread_count) {
         Ok(dec) => {
             *out_decoder = Box::into_raw(Box::new(MoyuVideoDecoder(dec)));
             MoyuVideoResult::Ok
@@ -346,7 +340,7 @@ mod tests {
         let (_fourcc, _w, _h, frames) = read_ivf_frames(video_path);
         assert!(!frames.is_empty(), "No frames in IVF file");
 
-        let mut dec = Decoder::new(codec, PixelFormat::I420, 1).expect("Failed to create decoder");
+        let mut dec = Decoder::new(codec, 1).expect("Failed to create decoder");
 
         for (idx, frame_data) in frames.iter().enumerate() {
             dec.send_packet(Some(frame_data), idx as i64)
@@ -360,7 +354,7 @@ mod tests {
                             "Frame dimensions must be positive"
                         );
                         assert!(!frame.planes[0].is_null(), "Y plane must not be null");
-                        assert_eq!(frame.format, PixelFormat::I420);
+                        assert!(matches!(frame.format, PixelFormat::I420 | PixelFormat::Nv12));
 
                         // Verify Y plane has actual pixel data (not all zeros).
                         // SAFETY: plane pointer is valid while decoder is alive.
@@ -399,7 +393,6 @@ mod tests {
         unsafe {
             let config = MoyuVideoDecoderConfig {
                 codec: MoyuVideoCodec::Vp9,
-                output_format: MoyuVideoPixelFormat::I420,
                 thread_count: 1,
             };
             let mut handle: *mut MoyuVideoDecoder = ptr::null_mut();

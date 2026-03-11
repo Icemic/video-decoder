@@ -25,6 +25,18 @@ impl PixelFormat {
             PixelFormat::Nv12 => AV_PIX_FMT_NV12,
         }
     }
+
+    fn from_av_pix_fmt(fmt: AVPixelFormat) -> Option<Self> {
+        match fmt {
+            AV_PIX_FMT_YUV420P => Some(PixelFormat::I420),
+            AV_PIX_FMT_NV12 => Some(PixelFormat::Nv12),
+            _ => None,
+        }
+    }
+}
+
+fn select_output_format(src_fmt: AVPixelFormat) -> PixelFormat {
+    PixelFormat::from_av_pix_fmt(src_fmt).unwrap_or(PixelFormat::I420)
 }
 
 /// Decoded frame data returned to the C caller.
@@ -67,7 +79,6 @@ pub struct Decoder {
     sws_ctx: *mut SwsContext,
     /// Source pixel format of the currently cached sws_ctx.
     sws_src_fmt: AVPixelFormat,
-    output_format: PixelFormat,
     /// Backing buffer for dst_frame planes.
     dst_buf: Vec<u8>,
 }
@@ -81,7 +92,7 @@ impl Decoder {
     ///
     /// `thread_count` of 0 instructs FFmpeg to choose automatically based on
     /// the number of available CPU cores.
-    pub fn new(codec: Codec, output_format: PixelFormat, thread_count: i32) -> Result<Self, DecoderError> {
+    pub fn new(codec: Codec, thread_count: i32) -> Result<Self, DecoderError> {
         unsafe {
             let codec_id = match codec {
                 Codec::Vp9 => AV_CODEC_ID_VP9,
@@ -139,7 +150,6 @@ impl Decoder {
                 dst_frame,
                 sws_ctx: ptr::null_mut(),
                 sws_src_fmt: AV_PIX_FMT_NONE,
-                output_format,
                 dst_buf: Vec::new(),
             })
         }
@@ -204,10 +214,10 @@ impl Decoder {
             let width = (*self.av_frame).width;
             let height = (*self.av_frame).height;
             let pts = (*self.av_frame).pts;
-            let dst_fmt = self.output_format.as_av_pix_fmt();
+            let output_format = select_output_format(src_fmt);
+            let dst_fmt = output_format.as_av_pix_fmt();
 
-            // If the codec already outputs the requested format, return plane
-            // pointers directly from the decoded frame (zero-copy path).
+            // Preserve native I420/NV12 frames without conversion.
             if src_fmt == dst_fmt {
                 let mut planes = [ptr::null::<u8>(); 3];
                 let mut strides = [0i32; 3];
@@ -216,10 +226,10 @@ impl Decoder {
                     planes[i] = (*self.av_frame).data[i] as *const u8;
                     strides[i] = (*self.av_frame).linesize[i];
                 }
-                return Ok(Frame { planes, strides, width, height, format: self.output_format, pts });
+                return Ok(Frame { planes, strides, width, height, format: output_format, pts });
             }
 
-            // Otherwise perform a pixel-format conversion via libswscale.
+            // Normalize any other format to I420 for the public ABI.
             self.ensure_sws_ctx(src_fmt, dst_fmt, width, height)?;
             self.ensure_dst_buf(dst_fmt, width, height)?;
 
@@ -244,7 +254,7 @@ impl Decoder {
                 strides[i] = (*self.dst_frame).linesize[i];
             }
 
-            Ok(Frame { planes, strides, width, height, format: self.output_format, pts })
+            Ok(Frame { planes, strides, width, height, format: output_format, pts })
         }
     }
 

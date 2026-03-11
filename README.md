@@ -58,7 +58,6 @@ typedef enum {
 /* Decoder configuration */
 typedef struct {
     MoyuVideoCodec       codec;
-    MoyuVideoPixelFormat output_format;
     int32_t              thread_count; /* 0 = auto */
 } MoyuVideoDecoderConfig;
 
@@ -108,9 +107,8 @@ const char *moyu_video_get_ffmpeg_info(void);
 
 /* 1. Create a decoder */
 MoyuVideoDecoderConfig config = {
-    .codec         = MOYU_VIDEO_CODEC_VP9,
-    .output_format = MOYU_VIDEO_PIXEL_FORMAT_I420,
-    .thread_count  = 0,
+    .codec        = MOYU_VIDEO_CODEC_VP9,
+    .thread_count = 0,
 };
 MoyuVideoDecoder *dec = NULL;
 assert(moyu_video_decoder_create(&config, &dec) == MOYU_VIDEO_OK);
@@ -124,6 +122,7 @@ MoyuVideoFrame frame;
 while (moyu_video_decoder_receive_frame(dec, &frame) == MOYU_VIDEO_OK) {
     /* frame.planes[0] = Y, frame.planes[1] = U, frame.planes[2] = V */
     /* frame.strides[i] = bytes per row for plane i */
+    /* frame.format tells you whether planes are I420 or NV12 */
     upload_to_gpu(frame.planes, frame.strides, frame.width, frame.height);
 }
 

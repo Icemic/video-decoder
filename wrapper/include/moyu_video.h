@@ -66,7 +66,6 @@ typedef enum {
 /** Parameters passed to moyu_video_decoder_create(). */
 typedef struct {
     MoyuVideoCodec       codec;
-    MoyuVideoPixelFormat output_format;
     /**
      * Number of decoding threads.
      * 0 instructs the library to choose automatically based on the number of
@@ -161,6 +160,9 @@ MoyuVideoResult moyu_video_decoder_send_packet(
  *
  * @param decoder    A valid decoder handle.
  * @param out_frame  On MOYU_VIDEO_OK, populated with the decoded frame data.
+ *                   The returned frame format is always I420 or NV12 and is
+ *                   reported via out_frame->format. Native I420/NV12 frames are
+ *                   returned as-is; any other decoder output is converted to I420.
  * @return           MOYU_VIDEO_OK on success.
  *                   MOYU_VIDEO_AGAIN if no frame is available yet.
  *                   MOYU_VIDEO_EOF if the decoder has been flushed and

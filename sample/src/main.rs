@@ -52,7 +52,6 @@ enum MoyuVideoResult {
 #[repr(C)]
 struct MoyuVideoDecoderConfig {
     codec: MoyuVideoCodec,
-    output_format: MoyuVideoPixelFormat,
     thread_count: i32,
 }
 
@@ -203,7 +202,6 @@ fn run_decode_test(lib: &WrapperLib, video_path: &std::path::Path, codec: MoyuVi
 
     let config = MoyuVideoDecoderConfig {
         codec,
-        output_format: MoyuVideoPixelFormat::I420,
         thread_count: 1,
     };
     let mut handle: *mut MoyuVideoDecoder = std::ptr::null_mut();
@@ -244,8 +242,9 @@ fn run_decode_test(lib: &WrapperLib, video_path: &std::path::Path, codec: MoyuVi
                     assert!(frame.strides[0] >= frame.width, "Y stride must be >= width");
 
                     println!(
-                        "  Frame {frames_decoded}: {}x{} pts={}  strides=[{},{},{}]",
+                        "  Frame {frames_decoded}: {}x{} pts={} format={:?} strides=[{},{},{}]",
                         frame.width, frame.height, frame.pts,
+                        frame.format,
                         frame.strides[0], frame.strides[1], frame.strides[2],
                     );
 
